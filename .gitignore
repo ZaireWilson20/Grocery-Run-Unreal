@@ -1,0 +1,89 @@
+# Ignore binary files
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Ignore project-specific files
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Rider-specific directories
+.idea/
+*.iml
+out/
+
+# Build folders
+Build/
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore Rider-specific settings
+.idea/
+.idea_modules/
+.idea/misc.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/*.iml
+.idea/modules.xml
+.idea/riderAdditionalFiles.xml
+.idea/codeStyles/
+.idea/caches/
+.idea/compiler.xml
+.idea/coverage/
+.idea/scopes/
+.idea/shelf/
+.idea/tasks/
+.idea/uiDesigner.xml
+.idea/workspace.xml
+.idea/assetWizard.xml
+.idea/dictionaries/
+.idea/runConfigurations/
+.idea/svn.xml
+.idea/vcs.xml
+.idea/asset-inspection.xml
+.idea/modules.xml
+.idea/gradle.xml
+.idea/libraries/
+.idea/copyright/
+.idea/inspectionProfiles/
+.idea/libraries/
+.idea/modules/
+.idea/usage.statistics.xml
+.idea/assets/
+.idea/watchers/
+.idea/lookup.xml
+.idea/assets.inspection.xml
+.idea/favorites.xml
+
+# Exclude Rider files from version control
+.idea/misc.xml
+.idea/vcs.xml
+.idea/workspace.xml
+
+# Ignore JetBrains project-specific files
+*.ipr
+*.iws
+
+# Ignore other IDE-specific files
+.vscode/
+.vscode/extensions.json
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
+
+# Ignore Unity-related files if applicable
+Library/
+Temp/
+Obj/
+Build/
+Assets/AssetStoreTools*
+
+# Ignore log files
+*.log
