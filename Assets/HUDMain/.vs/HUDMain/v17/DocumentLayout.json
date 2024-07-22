@@ -1,0 +1,99 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|c:\\users\\zaire\\documents\\unreal projects\\groceryrun\\assets\\hudmain\\runtimercomponent\\runtimer.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|solutionrelative:runtimercomponent\\runtimer.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|c:\\users\\zaire\\documents\\unreal projects\\groceryrun\\assets\\hudmain\\runtimercomponent\\runtimer.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|solutionrelative:runtimercomponent\\runtimer.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|c:\\users\\zaire\\documents\\unreal projects\\groceryrun\\assets\\hudmain\\hudmain.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|solutionrelative:hudmain.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|c:\\users\\zaire\\documents\\unreal projects\\groceryrun\\assets\\hudmain\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|c:\\users\\zaire\\documents\\unreal projects\\groceryrun\\assets\\hudmain\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DE390AD7-ECE5-4247-9932-83B364EC39E3}|HUDMain.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "RunTimer.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\RunTimerComponent\\RunTimer.xaml.cs",
+              "RelativeDocumentMoniker": "RunTimerComponent\\RunTimer.xaml.cs",
+              "ToolTip": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\RunTimerComponent\\RunTimer.xaml.cs",
+              "RelativeToolTip": "RunTimerComponent\\RunTimer.xaml.cs",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-05T21:21:42.197Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "RunTimer.xaml",
+              "DocumentMoniker": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\RunTimerComponent\\RunTimer.xaml",
+              "RelativeDocumentMoniker": "RunTimerComponent\\RunTimer.xaml",
+              "ToolTip": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\RunTimerComponent\\RunTimer.xaml",
+              "RelativeToolTip": "RunTimerComponent\\RunTimer.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-07-05T21:20:02.245Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "HUDMain.csproj",
+              "DocumentMoniker": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\HUDMain.csproj",
+              "RelativeDocumentMoniker": "HUDMain.csproj",
+              "ToolTip": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\HUDMain.csproj",
+              "RelativeToolTip": "HUDMain.csproj",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAcAAAAZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-07-05T21:14:08.007Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "MainWindow.xaml",
+              "ToolTip": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\MainWindow.xaml",
+              "RelativeToolTip": "MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-07-05T21:13:17.536Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "MainWindow.xaml.cs",
+              "ToolTip": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\HUDMain\\MainWindow.xaml.cs",
+              "RelativeToolTip": "MainWindow.xaml.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-05T21:13:17.316Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

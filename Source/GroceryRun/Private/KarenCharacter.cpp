@@ -7,9 +7,14 @@
 #include "VectorTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NavigationSystem.h"
+#include "GroceryRun/GroceryRunCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 class AAIController;
 
+float HorizontalDistance(FVector a, FVector b){
+	return UE::Geometry::Distance(FVector(a.X, a.Y, 0), FVector(b.X, b.Y, 0));
+}
 
 // Sets default values
 AKarenCharacter::AKarenCharacter()
@@ -23,7 +28,27 @@ AKarenCharacter::AKarenCharacter()
 void AKarenCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if(LinearMinuteTimeCurve) {
+		FOnTimelineFloat chaseFloat;
+		chaseFloat.BindUFunction(this, FName("HandleStopChaseTimer"));
+		StopChaseTimeline.AddInterpFloat(LinearMinuteTimeCurve, chaseFloat);
 
+		FOnTimelineFloat crashOutFloat;
+		crashOutFloat.BindUFunction(this, FName("HandleCrashOutTimer"));
+		CrashOutTimeline.AddInterpFloat(LinearMinuteTimeCurve, crashOutFloat);
+
+		FOnTimelineFloat patienceFloat;
+		patienceFloat.BindUFunction(this, FName("HandlePatienceTimer"));
+		PatienceTimeline.AddInterpFloat(LinearMinuteTimeCurve, patienceFloat);
+	}
+	
+	if(PlayerCharacter == nullptr) {
+		PlayerCharacter = Cast<AGroceryRunCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		if(!PlayerCharacter) {
+			UE_LOG(LogTemp, Warning, TEXT("PlayerCharacter Cast Failed, Player Character on KarenCharacter is Null"));
+		}
+	}
 	if(AiController == nullptr){
 		AiController = Cast<AAIController>(GetController());
 		AiController->ReceiveMoveCompleted.AddDynamic(this, &AKarenCharacter::OnMoveCompletedHandler);
@@ -37,7 +62,6 @@ void AKarenCharacter::TransitionToPatrolAnimation(float DeltaTime){
 	
 	float alpha = FMath::Clamp(Timer/MaxPatrolAnimTransitionTime, 0.0, 1.0);
 	WalkingValue = FMath::Lerp(0.0, 1.0, alpha);
-
 	if(Timer >= MaxPatrolAnimTransitionTime){
 		AnimTransitioning = false;
 		Timer = 0; 
@@ -58,31 +82,146 @@ void AKarenCharacter::TransitionToIdleAnimation(float DeltaTime){
 	}
 }
 
+void AKarenCharacter::ScrewWithPlayer() {
+	FHitResult hit;
+	FVector loc = GetActorLocation();
+	FVector locEnd = loc + FVector(0, 0, 0);
+	FQuat Rotation = FQuat::Identity;
+	FCollisionShape sphereShape = FCollisionShape::MakeSphere(CurrentMoveState != ENPCState::Chase ? PatienceRadius : ChaseRadius);
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(this);
+	bool hitSomething = GetWorld()->SweepSingleByChannel(hit, GetActorLocation(), locEnd, Rotation, ECC_Pawn, sphereShape, params);
+	bool hitPlayer = hitSomething && hit.GetActor()->IsA(AGroceryRunCharacter::StaticClass());
+
+	if(CurrentMoveState != ENPCState::Chase) {
+		if(hitPlayer) {
+			if(!PatienceTimeline.IsPlaying()) {
+				PatienceTimeline.PlayFromStart();
+			}
+			DrawDebugSphere(GetWorld(), locEnd, PatienceRadius, 12, FColor::Red, false, .15f);
+		} else {
+			if(PatienceTimeline.IsPlaying()) {
+				PatienceTimeline.Stop();
+			}
+			DrawDebugSphere(GetWorld(), locEnd, PatienceRadius, 12, FColor::Green, false, .15f);
+		}
+	} else { // If player isn't in karen chase radius during chase, player should be able to break chase mode
+		if(!hitPlayer) {
+
+			// Start the chase exit timeline if's not already playing --> Ticks HandleStopChaseTimer()
+			if(!StopChaseTimeline.IsPlaying()) {
+				StopChaseTimeline.PlayFromStart();
+			}
+
+			// Stop crashout timeline since player isn't in trigger radius
+			if(CrashOutTimeline.IsPlaying()) {
+				CrashOutTimeline.Stop();
+			}
+			
+			DrawDebugSphere(GetWorld(), locEnd, ChaseRadius, 12, FColor::Cyan, false, .15f);
+		} else {
+
+			// Stop chase exit timeline since player is in trigger radius
+			if(StopChaseTimeline.IsPlaying()) {
+				StopChaseTimeline.Stop();
+			}
+
+			// Start the crash out timeline if's not already playing --> Ticks HandleCrashOutTimer()
+			if(!CrashOutTimeline.IsPlaying()) {
+				CrashOutTimeline.PlayFromStart();
+			}
+			
+			DrawDebugSphere(GetWorld(), locEnd, ChaseRadius, 12, FColor::Yellow, false, .15f);
+		}
+	}
+
+}
+
+void AKarenCharacter::HandlePatienceTimer(float Val) {
+	if(CurrentMoveState == ENPCState::Chase) { return; }
+	
+	if(Val >= TimeToTriggerChase) {
+		PatienceTimeline.Stop();
+		AiController->StopMovement();
+		CurrentMoveState = ENPCState::Chase;
+	}
+}
+void AKarenCharacter::HandleStopChaseTimer(float Val) {
+	if(CurrentMoveState == ENPCState::Idle) { return; }
+	
+	if(Val >= TimeToTriggerExitChase) {
+		ResetKaren();
+	}
+}
+
+void AKarenCharacter::HandleCrashOutTimer(float Val) {
+	if(Val >= TimeToTriggerCrashOut) {
+		KarenedOut = true;
+		ResetKaren();
+		if(PlayerCharacter) {
+			UE_LOG(LogTemp, Warning, TEXT("Karen Karend Out"));
+			Cast<AGroceryRunCharacter>(PlayerCharacter)->LosePatience();
+		}
+	}
+}
+
+
+/**
+ * Set Karen state to idle and stop current actions
+ */
+void AKarenCharacter::ResetKaren() {
+	if(AiController) {
+		AiController->StopMovement();
+	}
+
+	StopChaseTimeline.Stop();
+	PatienceTimeline.Stop();
+	CrashOutTimeline.Stop();
+	
+	Running = false;
+	WaitTimer = 0;
+	ShouldWaitNextMove = false;
+
+	CurrentMoveState = ENPCState::Idle;
+}
+
 // Called every frame
 void AKarenCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(KarenedOut) {
+		return;
+	}
+	PatienceTimeline.TickTimeline(DeltaTime);
+	StopChaseTimeline.TickTimeline(DeltaTime);
+	CrashOutTimeline.TickTimeline(DeltaTime);
+	ScrewWithPlayer();
 
-	if(AnimTransitioning){
-		switch (CurrentMoveState)
-		{
-		case ENPCState::Idle:
-			TransitionToIdleAnimation(DeltaTime);
-			break;
-		case ENPCState::Patrol:
-			TransitionToPatrolAnimation(DeltaTime);
-			break;
-		}	
-
+	if(AiController->GetMoveStatus() == EPathFollowingStatus::Moving && !MovingToLocation) {
+		MovingToLocation = true;
+		AnimTransitioning = true;
+		Timer = 0;
+	} else if (AiController->GetMoveStatus() == EPathFollowingStatus::Idle && MovingToLocation) {
+		MovingToLocation = false;
+		AnimTransitioning = true;
+		Timer = 0;
+	}
+	
+	if (AnimTransitioning && MovingToLocation) {
+		TransitionToPatrolAnimation(DeltaTime);
+	} else if (AnimTransitioning && !MovingToLocation) {
+		TransitionToIdleAnimation(DeltaTime);
 	}
 	
 	
-	if(PatrolPoints.Num() > 0){
-		if(AiController == nullptr || (CurrentMoveState == ENPCState::Idle && !AnimTransitioning && !ShouldWaitNextMove)){
+	if(PatrolPoints.Num() > 0 && CurrentMoveState != ENPCState::Chase){
+		if(AiController == nullptr || (CurrentMoveState == ENPCState::Idle && AiController->GetMoveStatus() == EPathFollowingStatus::Idle && !AnimTransitioning && !ShouldWaitNextMove)){
 			MoveToNextPatrolPoint();
 		} else if (ShouldWaitNextMove) {
 			WaitBeforeMove(DeltaTime);
 		}
+	} else if (CurrentMoveState == ENPCState::Chase && PlayerCharacter) {
+		FollowPlayer();
 	}
 	
 }
@@ -103,11 +242,16 @@ void AKarenCharacter::OnMoveCompletedHandler(FAIRequestID RequestID, EPathFollow
 		UE_LOG(LogTemp, Warning, TEXT("Move off path!"));
 	} else if (Result == EPathFollowingResult::Aborted) {
 		UE_LOG(LogTemp, Warning, TEXT("Move aborted!"));
+		return;
 	}
-	AnimTransitioning = true;
-	ShouldWaitNextMove = true;
-	WaitTimer = 0;
-	CurrentMoveState = ENPCState::Idle;
+
+
+	if(CurrentMoveState != ENPCState::Chase) {
+		AnimTransitioning = true;
+		ShouldWaitNextMove = true;
+		WaitTimer = 0;
+		CurrentMoveState = ENPCState::Idle;
+	}
 }
 
 void AKarenCharacter::WaitBeforeMove(float DeltaTime){
@@ -120,7 +264,35 @@ void AKarenCharacter::WaitBeforeMove(float DeltaTime){
 	}
 }
 
+void AKarenCharacter::FollowPlayer() {
+	if(!AiController) {
+		UE_LOG(LogTemp, Warning, TEXT("AI Controller Null On Karen Follow Player!"));
+		return;
+	}
+	float distToPlayer = HorizontalDistance(GetActorLocation(), PlayerCharacter->GetActorLocation());
+	float clamedDist = FMath::Clamp(distToPlayer - ChaseRadius, 0, ChaseRadius * .5f);
+	float wlkSpeed = FMath::Lerp(100.0f, 200.0f, clamedDist/(ChaseRadius * .5f) );
+	//UE_LOG(LogTemp, Warning, TEXT("Karen Dist to Player unclamped: %f -- WalkSpeed: %f -- alpha(dist/chase * .5f): %f"), distToPlayer, wlkSpeed, clamedDist/(ChaseRadius * .5f));
+	
+	if(wlkSpeed > 100.0f) {
+		Running = true;
+		GetCharacterMovement()->MaxWalkSpeed = wlkSpeed;
+	} else {
+		Running = false;
+	}
+	
+	if(distToPlayer >= ChaseRadius) {
+		AiController->MoveToActor(PlayerCharacter, ChaseRadius * .5f);
+		UE_LOG(LogTemp, Warning, TEXT("Move to actor"));
+	}
+	
+}
+
+
 void AKarenCharacter::MoveToNextPatrolPoint(){
+	if(KarenedOut) {
+		return;
+	}
 	CurrentMoveState = ENPCState::Patrol;
 	LastPatrolPoint = ChooseRandomPatrolPoint();
 	AnimTransitioning = true;
@@ -153,9 +325,7 @@ int AKarenCharacter::ChooseRandomPatrolPoint(){
 	return randomIntInRange;
 }
 
-float HorizontalDistance(FVector a, FVector b){
-	return UE::Geometry::Distance(FVector(a.X, 0, a.Z), FVector(a.X, 0, a.Z));
-}
+
 
 
 

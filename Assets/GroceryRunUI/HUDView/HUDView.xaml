@@ -1,0 +1,25 @@
+<UserControl x:Class="GroceryRunUI.HUDView.HUDView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        FontFamily="./#Aero Matics"
+        FontSize="36">
+
+    <UserControl.Resources>
+        <Storyboard x:Key="Intro"/>
+    </UserControl.Resources>
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource Intro}"/>
+        </EventTrigger>
+    </UserControl.Triggers>
+    <Grid>
+        <Viewbox>
+            <Grid Width="325.8" Height="80">
+                <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Height="45" Margin="69,19,0,0" TextWrapping="Wrap" Text="{Binding RunTimer}" VerticalAlignment="Top" Width="157"/>
+            </Grid>
+        </Viewbox>
+    </Grid>
+</UserControl>

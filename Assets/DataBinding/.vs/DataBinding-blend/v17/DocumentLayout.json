@@ -1,0 +1,36 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\DataBinding\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3FAAEED8-A33B-4F4D-9CB9-00C911A4EFBA}|DataBinding-blend.csproj|c:\\users\\zaire\\documents\\unreal projects\\groceryrun\\assets\\databinding\\databinding\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{3FAAEED8-A33B-4F4D-9CB9-00C911A4EFBA}|DataBinding-blend.csproj|solutionrelative:databinding\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\DataBinding\\DataBinding\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "DataBinding\\MainWindow.xaml",
+              "ToolTip": "C:\\Users\\Zaire\\Documents\\Unreal Projects\\GroceryRun\\Assets\\DataBinding\\DataBinding\\MainWindow.xaml",
+              "RelativeToolTip": "DataBinding\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-07-04T20:51:58.451Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
