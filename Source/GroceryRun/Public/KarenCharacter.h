@@ -4,19 +4,30 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "GRBaseCharacter.h"
+#include "GRStateDataAsset.h"
 #include "WayPoint.h"
 #include "GR_Enums.h"
 #include "Navigation/PathFollowingComponent.h"
-#include "GameFramework/Character.h"
 #include "GroceryRun/GroceryRunCharacter.h"
 #include "KarenCharacter.generated.h"
 
 
+class IGRState;
+class UGRStateDataAsset;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPushedEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGetUpEvent);
 
 
+class UGrKarenState;
+class UGrKarenIdleState;
+class UGrKarenChaseState;
+class UGrKarenFallenState;
+
+class UKarenStateMachine;
 
 UCLASS()
-class GROCERYRUN_API AKarenCharacter : public ACharacter
+class GROCERYRUN_API AKarenCharacter : public AGRBaseCharacter
 {
 	GENERATED_BODY()
 
@@ -33,9 +44,18 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Timing")
 	float TimeToTriggerChase = 3.0f;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Timing")
+	float TimeToTriggerGetUp = 3.0f;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Timing")
 	float TimeToTriggerExitChase = 3.0f;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Timing")
 	float TimeToTriggerCrashOut = 3.0f;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnPushedEvent OnPushedEvent;
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnPushedEvent OnGetUpEvent;
+
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Behavior")
 	TArray<AWayPoint*> PatrolPoints;
@@ -73,6 +93,14 @@ protected:
 	void HandleStopChaseTimer(float Val);
 	UFUNCTION()
 	void HandleCrashOutTimer(float Val);
+	UFUNCTION()
+	void HandleDownedTimer(float Val);
+
+	
+
+	UFUNCTION()
+	static bool IdleToChase(const AKarenCharacter* KarenCharacter);
+
 
 	void ResetKaren();
 
@@ -83,6 +111,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION(BlueprintCallable)
 	void MoveToNextPatrolPoint();
 
 	void WaitBeforeMove(float DeltaTime);
@@ -94,12 +123,30 @@ public:
 	UFUNCTION()
 	void OnMoveCompletedHandler(FAIRequestID RequestID, EPathFollowingResult::Type Result);
 
+	UFUNCTION()
+	void OnPushedByPlayer();
+
 	UFUNCTION(BlueprintCallable)
 	ENPCState GetCurrentMoveState(){ return CurrentMoveState;}
 	
 	UFUNCTION(BlueprintCallable)
 	bool GetKarenedOut() const { return KarenedOut;}
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="State Machine")
+	UKarenStateMachine* StateMachine;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IdleToChaseDebug = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool ChaseToIdleDebug = false;
+
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool TransitionTriggerFirst;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool TransitionTriggerSecond;
 private:
 	int LastPatrolPoint = 0;
 	
@@ -120,6 +167,13 @@ private:
 	FTimeline PatienceTimeline;
 	FTimeline StopChaseTimeline;
 	FTimeline CrashOutTimeline;
+	FTimeline DownedTimeLine;
+
+
+	//Delegate for binding UFunction
+	FScriptDelegate MyScriptDelegate;
+	
+
 
 };
 

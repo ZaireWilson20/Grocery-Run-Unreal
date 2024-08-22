@@ -42,7 +42,10 @@ AGroceryRunCharacter::AGroceryRunCharacter()
 	Mesh1P->CastShadow = false;
 	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
-
+	
+	
+	
+	
 	// Initialize sway parameters
 	SwayAmplitude = .5f; // Adjust amplitude as needed
 	SwayFrequency = .5f; // Adjust frequency as needed
@@ -82,27 +85,21 @@ void AGroceryRunCharacter::Tick(float DeltaTime){
 		bool betweenFOV = !FMath::IsNearlyEqual(cam, NormalFOV) || !FMath::IsNearlyEqual(cam, PickupFOV);
 		NoiseTimeX += DeltaTime * NoiseSpeed;
 		NoiseTimeY += DeltaTime * (NoiseSpeed/2);
-		//if(!betweenFOV) {
-			// Generate Perlin noise-based offsets within ±90 degrees
-			float NoiseOffsetPitch = 20 * FMath::PerlinNoise1D(NoiseTimeX);
-			float NoiseOffsetYaw = NoiseAmplitude * FMath::PerlinNoise1D(NoiseTimeY);
+		// Perlin noise offsets 
+		float NoiseOffsetPitch = 20 * FMath::PerlinNoise1D(NoiseTimeX);
+		float NoiseOffsetYaw = NoiseAmplitude * FMath::PerlinNoise1D(NoiseTimeY);
 
-			// Apply combined sway and noise offsets to controller rotation
-			//AddControllerYawInput(NoiseOffsetYaw);
-			//AddControllerPitchInput(NoiseOffsetPitch * .5f);
+		// Apply noise offsets to the initial rotation
+		FRotator NewRotation = InitialRotation;
+		NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch - NoiseOffsetPitch + SmoothPitch * 40, InitialRotation.Pitch - 30.0f, InitialRotation.Pitch + 30.0f);
+		NewRotation.Yaw = FMath::Clamp(NewRotation.Yaw + NoiseOffsetYaw + SmoothYaw * 40, InitialRotation.Yaw - 90.0f, InitialRotation.Yaw + 90.0f);
 
-			// Apply noise offsets to the initial rotation
-			FRotator NewRotation = InitialRotation;
-			NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch - NoiseOffsetPitch + SmoothPitch * 40, InitialRotation.Pitch - 30.0f, InitialRotation.Pitch + 30.0f);
-			NewRotation.Yaw = FMath::Clamp(NewRotation.Yaw + NoiseOffsetYaw + SmoothYaw * 40, InitialRotation.Yaw - 90.0f, InitialRotation.Yaw + 90.0f);
-
-			if (APlayerController* PC = Cast<APlayerController>(GetController()))
-			{
-				PC->SetControlRotation(NewRotation);
-			}
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->SetControlRotation(NewRotation);
+		}
 		SmoothYaw = FMath::Lerp(SmoothYaw, PrevControllerYaw, .2f * DeltaTime);
 		SmoothPitch = FMath::Lerp(SmoothPitch, PrevControllerPitch, .2f * DeltaTime);
-		//}
 	}
 
 }
@@ -113,6 +110,21 @@ void AGroceryRunCharacter::TriggerOnHoverEnter(){
 
 void AGroceryRunCharacter::TriggerOnHoverExit(){
 	OnHoverExit.Broadcast();
+}
+
+void AGroceryRunCharacter::BindDelegates(){
+	if(PushCollider) {
+		PushCollider->OnComponentBeginOverlap.AddDynamic(this, &AGroceryRunCharacter::TriggerIfKarenPushed);
+		PushCollider->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		
+	}
+
+	
+	if(CrouchCurve) {
+		FOnTimelineFloat CrouchProgFunc;
+		CrouchProgFunc.BindUFunction(this, FName("HandleCrouchProgress"));
+		CrouchTimeline.AddInterpFloat(CrouchCurve, CrouchProgFunc);
+	}
 }
 
 void AGroceryRunCharacter::LosePatience() {
@@ -157,14 +169,7 @@ void AGroceryRunCharacter::BeginPlay()
 	BaseMoveSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	BaseMoveSpeedCrouched = GetCharacterMovement()->MaxWalkSpeedCrouched;
 	BaseCapHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-
-	if(CrouchCurve) {
-		FOnTimelineFloat CrouchProgFunc;
-
-		CrouchProgFunc.BindUFunction(this, FName("HandleCrouchProgress"));
-		CrouchTimeline.AddInterpFloat(CrouchCurve, CrouchProgFunc);
-		
-	}
+	
 
 
 }
@@ -244,6 +249,9 @@ void AGroceryRunCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGroceryRunCharacter::Move);
+		
+		EnhancedInputComponent->BindAction(PushAction, ETriggerEvent::Started, this, &AGroceryRunCharacter::Push);
+		EnhancedInputComponent->BindAction(PushAction, ETriggerEvent::Completed, this, &AGroceryRunCharacter::Push_Finished);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGroceryRunCharacter::Look);
@@ -317,6 +325,18 @@ void AGroceryRunCharacter::Move(const FInputActionValue& Value){
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
+}
+
+void AGroceryRunCharacter::Push(const FInputActionValue& Value){
+	UE_LOG(LogTemp, Warning, TEXT("Push: Start"));
+
+	PushCollider->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+}
+
+void AGroceryRunCharacter::Push_Finished(const FInputActionValue& Value){
+	UE_LOG(LogTemp, Warning, TEXT("Push: Finished"));
+	PushCollider->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
 void AGroceryRunCharacter::LockOnGroceryStart(const FInputActionValue& Value){
@@ -455,5 +475,15 @@ void AGroceryRunCharacter::HandleSpeedPickupTiming(float DeltaTime) {
 
 void AGroceryRunCharacter::OnHealthPickup(float Val)
 {
+}
+
+void AGroceryRunCharacter::TriggerIfKarenPushed(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult){
+
+
+	if(OtherActor->IsA(AKarenCharacter::StaticClass())){
+		UE_LOG(LogTemp, Warning, TEXT("Trigger If Karen Pushed"));
+		AKarenCharacter* KarenActor = Cast<AKarenCharacter>(OtherActor);
+		KarenActor->OnPushedByPlayer();
+	}
 }
 

@@ -17,7 +17,8 @@ enum class ENPCState : uint8{
 	Patrol UMETA(DisplayName = "Patrol"),
 	Chase UMETA(DisplayName = "Chase"),
 	Attack UMETA(DisplayName = "Attack"),
-	Wait UMETA(DisplayName = "Wait")
+	Wait UMETA(DisplayName = "Wait"),
+	Downed UMETA(DisplayName = "Downed")
 };
 
 UENUM(BlueprintType)
@@ -25,6 +26,8 @@ enum class EPickupType : uint8{
 	Speed UMETA(DisplayName = "Speed"),
 	Health UMETA(DisplayName = "Health"),
 };
+
+
 
 class GR_Enums {
 

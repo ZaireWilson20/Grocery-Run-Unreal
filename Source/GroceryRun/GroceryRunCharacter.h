@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GroceryItemDataAsset.h"
 #include "GR_Enums.h"
+#include "Components/BoxComponent.h"
 #include "Components/PostProcessComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
@@ -72,6 +73,10 @@ class AGroceryRunCharacter : public ACharacter{
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
+	/** Push Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* PushAction;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
@@ -127,6 +132,9 @@ public:
 	int MaxHealth = 3;
 	UPROPERTY(BlueprintReadOnly);
 	bool MovementLocked = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AuxReferences")
+	UBoxComponent* PushCollider = nullptr;
 	
 	
 	// Function to trigger the event
@@ -134,6 +142,8 @@ public:
 	void TriggerOnHoverEnter();
 	UFUNCTION(BlueprintCallable, Category = "Events")
 	void TriggerOnHoverExit();
+	UFUNCTION(BlueprintCallable, Category="Events")
+	void BindDelegates();
 
 	UFUNCTION(BlueprintCallable)
 	void LosePatience();
@@ -176,6 +186,8 @@ protected:
 	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
+	void Push(const FInputActionValue& Value);
+	void Push_Finished(const FInputActionValue& Value);
 	
 	void LockOnGroceryStart(const FInputActionValue& Value);
 	void LockOnGroceryStartManual();
@@ -205,6 +217,9 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void OnHealthPickup(float Val);
+
+	UFUNCTION()
+	void TriggerIfKarenPushed(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 	
 
 	// APawn interface
@@ -262,6 +277,7 @@ private:
 	AActor* ActorInFocus = nullptr;
 
 	FTimeline CrouchTimeline;
+	FScriptDelegate PushColliderOverlapDelegate;
 
 
 	FVector2D GetCameraViewportCenter() const;

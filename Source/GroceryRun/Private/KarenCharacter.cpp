@@ -4,13 +4,19 @@
 #include "GroceryRun/Public/KarenCharacter.h"
 
 #include "AIController.h"
+#include "GRKarenChaseState.h"
+#include "GRKarenFallenState.h"
+#include "GRKarenIdleState.h"
 #include "VectorTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NavigationSystem.h"
 #include "GroceryRun/GroceryRunCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "KarenStateMachine.h"
+
 
 class AAIController;
+
 
 float HorizontalDistance(FVector a, FVector b){
 	return UE::Geometry::Distance(FVector(a.X, a.Y, 0), FVector(b.X, b.Y, 0));
@@ -19,15 +25,56 @@ float HorizontalDistance(FVector a, FVector b){
 // Sets default values
 AKarenCharacter::AKarenCharacter()
 {
+	//KarenStateMachine = CreateDefaultSubobject<UKarenStateMachine>(TEXT("State Mahcine"));
+	//KarenStateMachine->SetOwningActor(this);
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	//UE_LOG(LogTemp, Warning, TEXT("Karen Character Constructor"));
+
 	PrimaryActorTick.bCanEverTick = true;
 	CurrentMoveState = ENPCState::Idle;
+	if(PlayerCharacter){
+		//Note: function parameters not supported
+		MyScriptDelegate.BindUFunction(this, "OnPushedByPlayer");
+		PlayerCharacter->PushCollider->OnComponentBeginOverlap.AddUnique(MyScriptDelegate);
+	}
+}
+
+bool AKarenCharacter::IdleToChase(const AKarenCharacter* KarenCharacter)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Idle To Chase Called"));
+	bool valid = KarenCharacter != nullptr;
+	if(valid) valid = KarenCharacter->IdleToChaseDebug;
+
+	UE_LOG(LogTemp, Warning, TEXT("Idle To Chase Called: Passes? %d"), valid);
+
+	return valid;
 }
 
 // Called when the game starts or when spawned
 void AKarenCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	StateMachine = Cast<UKarenStateMachine>(GetComponentByClass(UKarenStateMachine::StaticClass()));
+
+	if(StateMachine != nullptr)
+	{
+		StateMachine->InitializeOnPlay();
+
+		/*KarenStateMachine->AddStateToObjMap(IdleState);
+		KarenStateMachine->AddStateToObjMap(ChaseState);
+		KarenStateMachine->AddStateToObjMap(FallenState);*/
+
+
+		// Set Idle Transitions
+		FValidationDelegate IdleValidDelegate;
+
+		/*
+		IdleValidDelegate.BindUFunction(this, "IdleToChase");
+		KarenStateMachine->AddTransition(IdleState, ChaseState, IdleValidDelegate);*/
+	}
+
+
+
 	
 	if(LinearMinuteTimeCurve) {
 		FOnTimelineFloat chaseFloat;
@@ -41,6 +88,10 @@ void AKarenCharacter::BeginPlay()
 		FOnTimelineFloat patienceFloat;
 		patienceFloat.BindUFunction(this, FName("HandlePatienceTimer"));
 		PatienceTimeline.AddInterpFloat(LinearMinuteTimeCurve, patienceFloat);
+
+		FOnTimelineFloat downedFloat;
+		downedFloat.BindUFunction(this,  FName("HandleDownedTimer"));
+		DownedTimeLine.AddInterpFloat(LinearMinuteTimeCurve, patienceFloat);
 	}
 	
 	if(PlayerCharacter == nullptr) {
@@ -138,7 +189,7 @@ void AKarenCharacter::ScrewWithPlayer() {
 }
 
 void AKarenCharacter::HandlePatienceTimer(float Val) {
-	if(CurrentMoveState == ENPCState::Chase) { return; }
+	if(CurrentMoveState == ENPCState::Chase || CurrentMoveState == ENPCState::Downed) { return; }
 	
 	if(Val >= TimeToTriggerChase) {
 		PatienceTimeline.Stop();
@@ -146,8 +197,20 @@ void AKarenCharacter::HandlePatienceTimer(float Val) {
 		CurrentMoveState = ENPCState::Chase;
 	}
 }
+
+void AKarenCharacter::HandleDownedTimer(float Val) {
+	if(CurrentMoveState != ENPCState::Downed){
+		return;
+	}
+	if(Val >= TimeToTriggerChase) {
+		DownedTimeLine.Stop();
+		ResetKaren();
+	}
+}
+
+
 void AKarenCharacter::HandleStopChaseTimer(float Val) {
-	if(CurrentMoveState == ENPCState::Idle) { return; }
+	if(CurrentMoveState == ENPCState::Idle || CurrentMoveState == ENPCState::Downed) { return; }
 	
 	if(Val >= TimeToTriggerExitChase) {
 		ResetKaren();
@@ -155,6 +218,9 @@ void AKarenCharacter::HandleStopChaseTimer(float Val) {
 }
 
 void AKarenCharacter::HandleCrashOutTimer(float Val) {
+	if(CurrentMoveState == ENPCState::Downed){
+		return;
+	}
 	if(Val >= TimeToTriggerCrashOut) {
 		KarenedOut = true;
 		ResetKaren();
@@ -164,6 +230,22 @@ void AKarenCharacter::HandleCrashOutTimer(float Val) {
 		}
 	}
 }
+
+void AKarenCharacter::OnPushedByPlayer(){
+	if(CurrentMoveState == ENPCState::Downed){
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Pushed In Collision"));
+	OnPushedEvent.Broadcast();
+	AiController->StopMovement();
+	DownedTimeLine.Play();
+	PatienceTimeline.Stop();
+	CrashOutTimeline.Stop();
+	StopChaseTimeline.Stop();
+	CurrentMoveState = ENPCState::Downed;
+}
+
+
 
 
 /**
@@ -189,7 +271,16 @@ void AKarenCharacter::ResetKaren() {
 void AKarenCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(StateMachine)
+	{
+		StateMachine->TickFSM(DeltaTime);
+	}
+
 	if(KarenedOut) {
+		return;
+	}
+	DownedTimeLine.TickTimeline(DeltaTime);
+	if(CurrentMoveState == ENPCState::Downed){
 		return;
 	}
 	PatienceTimeline.TickTimeline(DeltaTime);
@@ -245,13 +336,13 @@ void AKarenCharacter::OnMoveCompletedHandler(FAIRequestID RequestID, EPathFollow
 		return;
 	}
 
-
-	if(CurrentMoveState != ENPCState::Chase) {
+	ShouldWaitNextMove = true;
+	/*if(CurrentMoveState != ENPCState::Chase && CurrentMoveState != ENPCState::Downed) {
 		AnimTransitioning = true;
 		ShouldWaitNextMove = true;
 		WaitTimer = 0;
 		CurrentMoveState = ENPCState::Idle;
-	}
+	}*/
 }
 
 void AKarenCharacter::WaitBeforeMove(float DeltaTime){
@@ -267,6 +358,10 @@ void AKarenCharacter::WaitBeforeMove(float DeltaTime){
 void AKarenCharacter::FollowPlayer() {
 	if(!AiController) {
 		UE_LOG(LogTemp, Warning, TEXT("AI Controller Null On Karen Follow Player!"));
+		return;
+	}
+	if(CurrentMoveState != ENPCState::Chase)
+	{
 		return;
 	}
 	float distToPlayer = HorizontalDistance(GetActorLocation(), PlayerCharacter->GetActorLocation());

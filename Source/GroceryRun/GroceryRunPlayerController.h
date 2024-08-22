@@ -15,7 +15,10 @@ UCLASS()
 class GROCERYRUN_API AGroceryRunPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+
+public:
+	UFUNCTION(Exec)
+	void DebugTransitionTrigger(FName CharacterTag, FString num) const;
 protected:
 
 	/** Input Mapping Context to be used for player input */
